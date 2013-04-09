@@ -332,7 +332,7 @@ module Bosh::Director
     end
 
     # PUT /deployments/foo/jobs/dea/2?state={started,stopped,detached,restart,recreate}
-    put "/deployments/:deployment/jobs/:job/:index", :consumes => :yaml do
+    put '/deployments/:deployment/jobs/:job/:index', :consumes => :yaml do
       begin
         index = Integer(params[:index])
       rescue ArgumentError
@@ -340,19 +340,18 @@ module Bosh::Director
       end
 
       options = {
-        "job_states" => {
+        'job_states' => {
           params[:job] => {
-            "instance_states" => {
-              index => params["state"]
+            'instance_states' => {
+              index => params['state']
             }
           }
         }
       }
 
-      # we get the deployment here even though it isn't used here, to make sure
-      # the call returns a 404 if the deployment doesn't exist
-      @deployment_manager.find_by_name(params[:deployment])
-      task = @deployment_manager.create_deployment(@user, request.body, options)
+      deployment = @deployment_manager.find_by_name(params[:deployment])
+      manifest = request.content_length.nil? ? StringIO.new(deployment.manifest) : request.body
+      task = @deployment_manager.create_deployment(@user, manifest, options)
       redirect "/tasks/#{task.id}"
     end
 
